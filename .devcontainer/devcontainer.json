@@ -1,0 +1,12 @@
+{
+	"name": "C# (.NET)",
+	"image": "mcr.microsoft.com/devcontainers/dotnet:8.0",
+	"postCreateCommand": "dotnet restore --locked-mode && dotnet dev-certs https",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csdevkit"
+			]
+		}
+	}
+}
