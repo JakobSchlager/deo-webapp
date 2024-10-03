@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Frontend",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build frontend",
+      "program": "${workspaceFolder}/Deo.Frontend/bin/Debug/net8.0/Deo.Frontend.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Deo.Frontend",
+      "stopAtEntry": false,
+      // "serverReadyAction": {
+      //   "action": "openExternally",
+      //   "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      // },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Deo.Frontend/Views"
+      }
+    },
+    {
+      "name": "Launch Backend",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build backend",
+      "program": "${workspaceFolder}/Deo.Backend/bin/Debug/net8.0/Deo.Backend.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Deo.Backend",
+      "stopAtEntry": false,
+      // "serverReadyAction": {
+      //   "action": "openExternally",
+      //   "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      // },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Deo.Backend/Views"
+      }
+    }
+  ]
+}

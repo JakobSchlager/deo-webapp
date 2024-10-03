@@ -1,0 +1,15 @@
+@hostname = localhost
+@port = 6680
+@host = {{hostname}}:{{port}}
+
+###
+
+GET http://{{host}}/
+
+###
+
+POST http://{{host}}/increment
+
+###
+
+POST http://{{host}}/reset

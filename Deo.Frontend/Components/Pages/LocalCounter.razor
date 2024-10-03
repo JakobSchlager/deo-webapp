@@ -1,0 +1,23 @@
+﻿@page "/local-counter"
+@rendermode InteractiveServer
+@inject ICounterService counterService
+
+<PageTitle>Local Counter</PageTitle>
+
+<h1>Local Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Increment</button>
+<button class="btn btn-primary" @onclick="ResetCount">Reset</button>
+
+@code {
+    private int currentCount;
+    private void IncrementCount() => currentCount++;
+    private void ResetCount() => currentCount = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        currentCount = 0;
+        await base.OnInitializedAsync();
+    }
+}
