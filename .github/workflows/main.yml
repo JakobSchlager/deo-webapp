@@ -1,31 +1,106 @@
 name: Pipeline
 
-run-name: Run triggered by ${{ github.actor }}
+run-name: Run triggered by ${{ github.actor }} 😎
 
 on: [push, workflow_dispatch]
 
 jobs:
-  build: 
+  build:
     runs-on: self-hosted
-    env: 
+    env:
       DOTNET_INSTALL_DIR: /home/actions-runner/dotnet
     steps:
       - name: Check out repository code
-        uses: action/checkout@v4
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # to get version history in sonarqube
+          fetch-depth: 0
       - name: Set up .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8
-      - name: Build projects 
+      - name: Build projects
         run: |
           dotnet build Deo.Backend
           dotnet build Deo.Frontend
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
-        with: 
+        with:
           name: build
           path: |
             **/bin/
             **/obj/
+
+  test:
+    runs-on: self-hosted
+    needs: build
+    env:
+      DOTNET_INSTALL_DIR: /home/actions-runner/dotnet
+      NUGET_PACKAGES: /home/actions-runner/.nuget/packages
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8
+          cache: true
+          cache-dependency-path: |
+            Deo.Backend.Tests/packages.lock.json
+            Deo.Frontend.Tests/packages.lock.json
+      - name: Restore dependencies
+        run: dotnet restore --locked-mode
+      - name: Test projects
+        run: |
+          dotnet test --no-restore Deo.Backend.Tests
+          dotnet test --no-restore Deo.Frontend.Tests
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test
+          path: |
+            **/bin/
+            **/obj/
+
+  analyze:
+    runs-on: self-hosted
+    needs: test
+    env:
+      DOTNET_INSTALL_DIR: /home/actions-runner/dotnet
+      NUGET_PACKAGES: /home/actions-runner/.nuget/packages
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8
+          cache: true
+          cache-dependency-path: |
+            Deo.Backend.Tests/packages.lock.json
+            Deo.Frontend.Tests/packages.lock.json
+      - name: Set up dotnet tools
+        run: |
+          dotnet tool install --tool-path "/home/actions-runner/dotnet-tools" dotnet-sonarscanner
+          dotnet tool install --tool-path "/home/actions-runner/dotnet-tools" dotnet-coverage
+      - name: Restore dependencies
+        run: dotnet restore --locked-mode
+      - name: Analyze projects
+        run: |
+          /home/actions-runner/dotnet-tools/dotnet-sonarscanner begin \
+            /k:"${{ secrets.SONAR_KEY }}" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
+            /d:sonar.scanner.scanAll=false \
+            /d:sonar.cs.vscoveragexml.reportsPaths=*.coverage.xml
+          /home/actions-runner/dotnet-tools/dotnet-coverage collect "dotnet test Deo.Backend.Tests" -f xml -o "backend.coverage.xml"
+          /home/actions-runner/dotnet-tools/dotnet-coverage collect "dotnet test Deo.Frontend.Tests" -f xml -o "frontend.coverage.xml"
+          /home/actions-runner/dotnet-tools/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: analyze
+          path: "**/*.coverage.xml"
