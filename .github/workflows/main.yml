@@ -50,7 +50,9 @@ jobs:
             Deo.Backend.Tests/packages.lock.json
             Deo.Frontend.Tests/packages.lock.json
       - name: Restore dependencies
-        run: dotnet restore --locked-mode
+        run: |
+          dotnet restore --locked-mode Deo.Backend.Tests
+          dotnet restore --locked-mode Deo.Frontend.Tests
       - name: Test projects
         run: |
           dotnet test --no-restore Deo.Backend.Tests
@@ -62,6 +64,48 @@ jobs:
           path: |
             **/bin/
             **/obj/
+
+  e2e_test:
+    runs-on: self-hosted
+    needs: test
+    env:
+      DOTNET_INSTALL_DIR: /home/actions-runner/dotnet
+      NUGET_PACKAGES: /home/actions-runner/.nuget/packages
+      DEO_FRONTEND_URL: http://localhost:5581
+      DEO_BACKEND_URL: http://localhost:6681
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8
+          cache: true
+          cache-dependency-path: |
+            Deo.WebApp.Tests/packages.lock.json
+      - name: Restore dependencies
+        run: dotnet restore --locked-mode Deo.WebApp.Tests
+      - name: Build projects
+        run: |
+          dotnet build Deo.Backend
+          dotnet build Deo.Frontend
+      - name: Launch web app
+        run: |
+          dotnet run --no-build --project Deo.Backend -- --urls $DEO_BACKEND_URL > /dev/null 2>&1 &
+          echo "DEO_BACKEND_PID=$!" >> "$GITHUB_ENV"
+          dotnet run --no-build --project Deo.Frontend -e DEO_BACKEND_URL=$DEO_BACKEND_URL -- --urls $DEO_FRONTEND_URL > /dev/null 2>&1 &
+          echo "DEO_FRONTEND_PID=$!" >> "$GITHUB_ENV"
+      - name: Execute end-to-end tests (${{ matrix.browser }})
+        run: dotnet test --no-restore Deo.WebApp.Tests -e BROWSER=${{ matrix.browser }} -e DEO_FRONTEND_URL=$DEO_FRONTEND_URL
+      - name: Shutdown web app
+        run: |
+          kill -s TERM $DEO_FRONTEND_PID
+          kill -s TERM $DEO_BACKEND_PID
 
   analyze:
     runs-on: self-hosted
@@ -87,7 +131,9 @@ jobs:
           dotnet tool install --tool-path "/home/actions-runner/dotnet-tools" dotnet-sonarscanner
           dotnet tool install --tool-path "/home/actions-runner/dotnet-tools" dotnet-coverage
       - name: Restore dependencies
-        run: dotnet restore --locked-mode
+        run: |
+          dotnet restore --locked-mode Deo.Backend.Tests
+          dotnet restore --locked-mode Deo.Frontend.Tests
       - name: Analyze projects
         run: |
           /home/actions-runner/dotnet-tools/dotnet-sonarscanner begin \
@@ -104,3 +150,24 @@ jobs:
         with:
           name: analyze
           path: "**/*.coverage.xml"
+
+  security:
+    runs-on: self-hosted
+    needs: test
+    permissions:
+      security-events: write
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Analyze projects
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'

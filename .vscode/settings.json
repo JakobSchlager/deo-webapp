@@ -1,4 +1,8 @@
 {
   "editor.formatOnSave": true,
-  "explorer.excludeGitIgnore": true
+  "explorer.excludeGitIgnore": true,
+  "sonarlint.connectedMode.project": {
+    "connectionId": "http-localhost-9000",
+    "projectKey": "Deo.WebApp"
+  }
 }
