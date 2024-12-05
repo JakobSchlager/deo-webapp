@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: deo
+  name: deo-frontend-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deo-frontend
+  template:
+    metadata:
+      labels:
+        app: deo-frontend
+    spec:
+      imagePullSecrets:
+      - name: ghcr-login-secret
+      containers:
+      - name: deo-frontend
+        image: ghcr.io/jkarder/deo-frontend:latest
+        args: ["--urls", "http://*:2000"]
+        ports:
+        - containerPort: 2000
+        env:
+        - name: DEO_BACKEND_URL
+          value: "http://deo-backend-svc:3000"
