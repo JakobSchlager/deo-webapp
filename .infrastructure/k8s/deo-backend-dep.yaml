@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: deo
+  name: deo-backend-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deo-backend
+  template:
+    metadata:
+      labels:
+        app: deo-backend
+    spec:
+      imagePullSecrets:
+      - name: ghcr-login-secret
+      containers:
+      - name: deo-backend
+        image: forgejo.deadlock.at/jkarder/deo-backend:latest
+        args: ["--urls", "http://*:3000"]
+        ports:
+        - containerPort: 3000
