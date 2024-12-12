@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: deo
+  name: deo-backend-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deo-backend
+  template:
+    metadata:
+      labels:
+        app: deo-backend
+    spec:
+      imagePullSecrets:
+        - name: ghcr-login-secret
+      containers:
+        - name: deo-backend
+          image: ghcr.io/jkarder/deo-webapp-backend:latest
+          args: ["--urls", "http://*:3000"]
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: deo
+  name: deo-backend-svc
+spec:
+  clusterIP: None
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  selector:
+    app: deo-backend
