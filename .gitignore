@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# ignore terraform variables
+terraform.tfvars
+
 # User-specific files
 *.rsuser
 *.suo
