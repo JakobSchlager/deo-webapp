@@ -1,0 +1,40 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+      - deo-network
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana-oss
+    networks:
+      - deo-network
+    ports:
+      - 3000:3000
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    networks:
+      - deo-network
+    ports:
+      - 4317:4317
+      - 16686:16686
+
+  uptime-kuma:
+    image: louislam/uptime-kuma
+    networks:
+      - deo-network
+    ports:
+      - 3001:3001
+    volumes:
+      - uptime-kuma-data:/app/data
+
+networks:
+  deo-network:
+    external: true
+
+volumes:
+  uptime-kuma-data: {}

@@ -8,5 +8,4 @@ WORKDIR /app
 COPY --from=build-stage /build/bin/Release/net8.0/publish/ .
 ENTRYPOINT ["/app/Deo.Backend"]
 
-# docker build -t deo-backend:latest .
 # docker run --name deo-backend -d --network deo-network -p 5000:5000 deo-backend:latest --urls http://0.0.0.0:5000
